@@ -26,13 +26,11 @@ setup_args = {'name':'cyargsort',
     'version':'0.1.0',
     'author':'Jason Rudy',
     'author_email':'jcrudy@gmail.com',
-    'packages':['parallel',],
-    'license':'LICENSE.txt',
+    'packages':[],
     'description':'Argsort in Cython',
     'long_description':open('README.md','r').read(),
     'py_modules' : [],
     'ext_modules' : ext_modules,
-    'classifiers' : ['Development Status :: 3 - Alpha'],
     'requires':[]} 
 
 #Add the build_ext command only if cythonizing

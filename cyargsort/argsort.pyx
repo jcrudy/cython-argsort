@@ -4,46 +4,44 @@
 # cython: wraparound = False
 # cython: profile = False
 
-cimport numpy as cnp
+cimport numpy as np
 import numpy as np
 from libc.stdlib cimport malloc, free
-from cython cimport view
-cnp.import_array()
  
-ctypedef cnp.float64_t FLOAT_t
-ctypedef cnp.intp_t INT_t
-ctypedef cnp.ulong_t INDEX_t
-ctypedef cnp.uint8_t BOOL_t
-
 cdef extern from "stdlib.h":
     ctypedef void const_void "const void"
     void qsort(void *base, int nmemb, int size,
             int(*compar)(const_void *, const_void *)) nogil
 
-cdef struct Sorter:
-    INT_t index
-    FLOAT_t value
+cdef struct IndexedElement:
+    np.ulong_t index
+    np.float64_t value
 
 cdef int _compare(const_void *a, const_void *b):
-    cdef FLOAT_t v = ((<Sorter*>a)).value-((<Sorter*>b)).value
+    cdef np.float64_t v = (<IndexedElement*> a).value-(<IndexedElement*> b).value
     if v < 0: return -1
     if v >= 0: return 1
 
-cdef void cyargsort(FLOAT_t[:] data, Sorter * order):
-    cdef INT_t i
-    cdef INT_t n = data.shape[0]
-    for i in range(n):
-        order[i].index = i
-        order[i].value = data[i]
-    qsort(<void *> order, n, sizeof(Sorter), _compare)
+cpdef argsort(np.float64_t[:] data, np.intp_t[:] order):
+    cdef np.ulong_t i
+    cdef np.ulong_t n = data.shape[0]
     
-cpdef argsort(FLOAT_t[:] data, INT_t[:] order):
-    cdef INT_t i
-    cdef INT_t n = data.shape[0]
-    cdef Sorter *order_struct = <Sorter *> malloc(n * sizeof(Sorter))
-    cyargsort(data, order_struct)
+    # Allocate index tracking array.
+    cdef IndexedElement *order_struct = <IndexedElement *> malloc(n * sizeof(IndexedElement))
+    
+    # Copy data into index tracking array.
+    for i in range(n):
+        order_struct[i].index = i
+        order_struct[i].value = data[i]
+        
+    # Sort index tracking array.
+    qsort(<void *> order_struct, n, sizeof(IndexedElement), _compare)
+    
+    # Copy indices from index tracking array to output array.
     for i in range(n):
         order[i] = order_struct[i].index
+        
+    # Free index tracking array.
     free(order_struct)
     
 
